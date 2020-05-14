@@ -1,4 +1,4 @@
-package com.joo.corona;
+package com.joo.corona.Data;
 
 public class personData {
     int PID;    //환자 번호

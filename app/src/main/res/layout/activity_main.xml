@@ -1,43 +1,55 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="#ffffff"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity">
-    <RelativeLayout
+    android:orientation="vertical">
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:background="#464242"
-        android:id="@+id/main_relative"
-        >
+        android:layout_height="50dp"
+        android:orientation="horizontal"
 
+        android:gravity="center"
+        android:background="@color/colorPrimary">
         <TextView
-            android:id="@+id/main_tv_offline"
+            android:id="@+id/main_title_onoff"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
             android:text="오프라인"
             android:textColor="#ffffff"
-            android:textSize="24sp"
-            android:textStyle="bold"></TextView>
-
-        <Switch
-            android:id="@+id/main_switch"
+            android:textSize="20dp"
+            android:gravity="center"/>
+        <com.kyleduo.switchbutton.SwitchButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="right|center"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:layout_marginRight="16dp"
-            ></Switch>
-    </RelativeLayout>
-    <fragment
-        android:id="@+id/map_fragment"
+            android:id="@+id/main_title_switch"
+            android:theme="@style/SwitchButtonStyle"
+            >
+        </com.kyleduo.switchbutton.SwitchButton>
+    </LinearLayout>
+
+<!--    <fragment-->
+<!--        android:id="@+id/main_mapview"-->
+<!--        android:name="com.naver.maps.map.MapFragment"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="0dp"-->
+<!--        android:layout_weight="1"/>-->
+
+
+    <Button
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="com.naver.maps.map.MapFragment" />
+        android:layout_height="60dp"
+        android:id="@+id/btn_show"
+        android:text="Get Location"
+        />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_delete"
+        android:text="delete Location"
+        ></Button>
+
 
 
 </LinearLayout>

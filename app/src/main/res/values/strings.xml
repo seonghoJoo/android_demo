@@ -14,7 +14,7 @@
     <string name="menu_share">Share</string>
     <string name="menu_send">Send</string>
 
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar"/>
+
 
 
     <string name="launch_activity">Launch activity</string>
@@ -31,9 +31,8 @@
 
     <string name="location_updated">Location Updated: %1$s</string>
 
-    <plurals name="num_locations_reported">
-        <item quantity="zero">No location reported</item>
-        <item quantity="one">One location reported</item>
-        <item quantity="other">%d locations reported</item>
-    </plurals>
+
+
+
+
 </resources>
