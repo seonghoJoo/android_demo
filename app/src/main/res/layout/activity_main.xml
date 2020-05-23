@@ -29,27 +29,71 @@
         </com.kyleduo.switchbutton.SwitchButton>
     </LinearLayout>
 
-<!--    <fragment-->
-<!--        android:id="@+id/main_mapview"-->
-<!--        android:name="com.naver.maps.map.MapFragment"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:layout_weight="1"/>-->
-
-
-    <Button
+    <fragment
+        android:id="@+id/main_mapview"
+        android:name="com.naver.maps.map.MapFragment"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:id="@+id/btn_show"
-        android:text="Get Location"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:layout_gravity="center">
+       <Button
+           android:layout_width="0dp"
+           android:layout_height="match_parent"
+           android:layout_weight="1"
+           android:id="@+id/main_my_btn"
+           android:text="내 동선 보기">
+       </Button>
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/main_case_btn"
+            android:text="확진자 동선 보기">
+        </Button>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:paddingRight="16dp"
+        android:paddingLeft="16dp"
+        android:layout_gravity="center">
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:id="@+id/main_left_iv"
+        android:src="@drawable/ic_keyboard_arrow_left_grey_700_48dp"
         />
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_delete"
-        android:text="delete Location"
-        ></Button>
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+        </View>
+        <TextView
+            android:id="@+id/main_date_tv"
+            android:gravity="center"
+            android:textSize="30sp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            tools:text="5월 17일"></TextView>
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+        </View>
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:id="@+id/main_right_iv"
+        android:src="@drawable/ic_keyboard_arrow_right_grey_700_48dp"
+        ></ImageView>
 
-
+    </LinearLayout>
 
 </LinearLayout>

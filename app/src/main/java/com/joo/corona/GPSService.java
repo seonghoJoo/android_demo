@@ -48,7 +48,7 @@ public class GPSService extends Service implements LocationListener {
     Location location;
     private Handler mHandler = new Handler();
     private Timer mTimer = null;
-    long notify_interval = 5000;
+    long notify_interval = 60000;
     public static String str_receiver = "servicetutorial.service.receiver";
     Intent intent;
     int val=0;
@@ -127,7 +127,7 @@ public class GPSService extends Service implements LocationListener {
                 if(isNetworkEnable && !isGPSEnable)
                     Log.e(TAG,"gps문제");
                 if(!isNetworkEnable && !isGPSEnable)
-                    Log.e(TAG,"둘다 문");
+                    Log.e(TAG,"둘다 문제");
             } else {
                 location = null;
                 if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -140,7 +140,7 @@ public class GPSService extends Service implements LocationListener {
                     // for Activity#requestPermissions for more details.
                     return;
                 }
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 100f, this);
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 60000, 100f, this);
                 if (locationManager != null) {
                     location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (location != null) {

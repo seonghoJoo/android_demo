@@ -1,6 +1,8 @@
 package com.joo.corona;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -20,7 +22,6 @@ public class BaseActivity extends AppCompatActivity {
 
         //BaseActivity를 상속받는 모든 액티비티의 스테이터스바 색상 강제지정
         setCustomStatusBar();
-
-
     }
+
 }
