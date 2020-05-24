@@ -30,8 +30,12 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.Request;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.joo.corona.Adapter.GetCurrentLocationAdapter;
 import com.joo.corona.Data.PrefM;
+import com.joo.corona.Util.AppHelper;
 import com.joo.corona.Util.SharedPreferenceManager;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.naver.maps.geometry.LatLng;
@@ -43,6 +47,7 @@ import com.naver.maps.map.NaverMap;
 import com.naver.maps.map.NaverMapSdk;
 import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.UiSettings;
+import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.PathOverlay;
 import com.naver.maps.map.util.FusedLocationSource;
 
@@ -101,6 +106,16 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        tv_date = (TextView) findViewById(R.id.main_date_tv);
+        Log.e(TAG,"onCreate");
+        now = System.currentTimeMillis();
+        String getTime = getTimeString(now);
+        String[] temp = getTime.split("-");
+        int tempYear = Integer.parseInt(temp[0]);
+        int tempMonth = Integer.parseInt(temp[1]);
+        int tempDay = Integer.parseInt(temp[2]);
+        Log.e(TAG,"tvdate");
+        tv_date.setText(tempMonth + "월 " + tempDay +"일");
 
         cnt = PrefM.getInt(this,"rebuild");
         //값이 할당 전이면 -1을 띄운다
@@ -108,16 +123,17 @@ public class MainActivity extends BaseActivity {
         if(cnt==-1){
             PrefM.setInt(this,"rebuild",gpsCount);
         }
-
+        path.setMap(null);
         tv_onoff = (TextView) findViewById(R.id.main_title_onoff);
         switchButton = (SwitchButton) findViewById(R.id.main_title_switch);
         myBtn = (Button) findViewById(R.id.main_my_btn);
         myBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                now = System.currentTimeMillis();
+
                 String getTime = getTimeString(now);
                 String[] temp = getTime.split("-");
+
                 int tempYear = Integer.parseInt(temp[0]);
                 int tempMonth = Integer.parseInt(temp[1]);
                 int tempDay = Integer.parseInt(temp[2]);
@@ -128,24 +144,18 @@ public class MainActivity extends BaseActivity {
         otherBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                now = System.currentTimeMillis();
-                String getTime = getTimeString(now);
+                long getNow = System.currentTimeMillis();
+                String getTime = getTimeString(getNow);
                 String[] temp = getTime.split("-");
                 int tempYear = Integer.parseInt(temp[0]);
                 int tempMonth = Integer.parseInt(temp[1]);
                 int tempDay = Integer.parseInt(temp[2]);
-                load(tempYear,tempMonth,tempDay);
+                //loadJSON(tempYear,tempMonth,tempDay);
             }
         });
-        tv_date = (TextView) findViewById(R.id.main_date_tv);
-        now = System.currentTimeMillis();
-        String getTime = getTimeString(now);
-        String[] temp = getTime.split("-");
-        int tempYear = Integer.parseInt(temp[0]);
-        int tempMonth = Integer.parseInt(temp[1]);
-        int tempDay = Integer.parseInt(temp[2]);
-        load(tempYear,tempMonth,tempDay);
-        tv_date.setText(tempMonth + "월 " + tempDay +"일");
+        if(AppHelper.requestQueue == null) {
+            AppHelper.requestQueue = Volley.newRequestQueue(getApplicationContext());
+        }
 
         imageViewLeft = (ImageView) findViewById(R.id.main_left_iv);
         imageViewLeft.setOnClickListener(new View.OnClickListener() {
@@ -350,6 +360,20 @@ public class MainActivity extends BaseActivity {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
     }
+//    public void sendRequest(){
+//        String url = "http://18.190.25.173:3000/join_corona";
+//        StringRequest request = new StringRequest(
+//                Request.Method.GET,
+//                url,
+//
+//        )
+//    }
+//    public void loadJSON(int tempYear,int tempMonth, int tempDay){
+//        sendRequest();
+//        Marker marker = new Marker();
+//        marker.setPosition();
+//
+//    }
     public void load (int tempYear,int tempMonth, int tempDay){
         try{
             BufferedReader br = new BufferedReader(new FileReader(getFilesDir()+filename));
@@ -359,12 +383,9 @@ public class MainActivity extends BaseActivity {
             Long t;
             Date today;
             Log.e(TAG,"Load text");
-
-            LatLng tempGeo;
             List<LatLng> coords = new ArrayList<>();
            //List<LatLng> tempCoords = new ArrayList<>();
             while((text= br.readLine())!=null){
-
                 String[] temp = text.split("/");
                 Log.e(TAG,"tempAssigned");
                 //Log.e(TAG,temp[0]+"    " + temp[1]+  "    " + temp[2]);
@@ -372,21 +393,28 @@ public class MainActivity extends BaseActivity {
                 int month = Integer.parseInt(temp[1]);
                 int day = Integer.parseInt(temp[2]);
                 int hour,minute;
-                if(tempYear ==year && tempMonth == month && tempDay == day){
+                if(tempYear == year && tempMonth == month && tempDay == day){
                     hour = Integer.parseInt(temp[3]);
                     minute =Integer.parseInt(temp[4]);
                     lat = Double.parseDouble(temp[5]);
                     lng = Double.parseDouble(temp[6]);
-                    tempGeo = new LatLng(lat,lng);
                     Log.e(TAG, "lat: "+ lat + " lng: " + lng +"  " + month+"/"+day+"/"+hour+"/"+minute);
                     Collections.addAll(coords,new LatLng(lat,lng));
                 }
+                else{
+                    continue;
+                }
 
             }
-            path.setCoords(coords);
-            path.setMap(mNaverMap);
-            path.setWidth(10);
-            path.setOutlineWidth(5);
+            if(coords.size()<2){
+             path.setMap(null);
+            }
+            else {
+                path.setCoords(coords);
+                path.setMap(mNaverMap);
+                path.setWidth(20);
+                path.setOutlineWidth(7);
+            }
             //path.setOutlineColor(333333);
             br.close();
 
