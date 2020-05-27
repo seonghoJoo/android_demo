@@ -6,11 +6,11 @@ import android.content.SharedPreferences;
 
 public class SharedPreferenceManager {
 
-    private final String PREF_NAME = "myPref";
+    private static final String PREF_NAME = "myPref";
 
     public final static String MY_LAT = "MY_LAT"; // double
     public final static String MY_LNG = "MY_LNG"; // double
-
+    public static final Boolean DEFUALT_VALUE_BOOLEAN = false;
 //    public final static String MY_DO = "MY_DO"; // String korean
 //    public final static String MY_SI = "MY_SI"; // String korean
 //
@@ -20,6 +20,22 @@ public class SharedPreferenceManager {
 
     public SharedPreferenceManager(Context context) {
         this.context = context;
+    }
+    private static SharedPreferences getPreferences(Context context){
+        return context.getSharedPreferences(PREF_NAME,Context.MODE_PRIVATE);
+    }
+    public static boolean getBoolean(Context context,String key){
+        SharedPreferences prefs = getPreferences(context);
+        boolean value = prefs.getBoolean(key,DEFUALT_VALUE_BOOLEAN);
+        return value;
+    }
+    public static void setBoolean(Context context, String key, boolean val)
+    {
+        SharedPreferences prefs = getPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(key,val);
+        editor.commit();
+
     }
 
     public void put(String key, double value) {
@@ -51,4 +67,11 @@ public class SharedPreferenceManager {
             return defaultValue;
         }
     }
+    public static void clear(Context context){
+        SharedPreferences prefs = getPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.commit();
+    }
+
 }

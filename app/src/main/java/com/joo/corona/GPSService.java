@@ -1,11 +1,15 @@
 package com.joo.corona;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.icu.util.Output;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.IBinder;
 import android.app.Service;
 import android.content.Context;
@@ -22,6 +26,8 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,6 +37,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
 
 
 /**
@@ -48,10 +56,12 @@ public class GPSService extends Service implements LocationListener {
     Location location;
     private Handler mHandler = new Handler();
     private Timer mTimer = null;
-    long notify_interval = 60000;
+    long notify_interval = 10000;
     public static String str_receiver = "servicetutorial.service.receiver";
     Intent intent;
     int val=0;
+    // Constants
+    private static final int ID_SERVICE = 101;
 
     public GPSService() {
 
@@ -71,7 +81,31 @@ public class GPSService extends Service implements LocationListener {
         mTimer = new Timer();
         mTimer.schedule(new TimerTaskToGetLocation(),5,notify_interval);
         intent = new Intent(str_receiver);
+
+
+        // Create the Foreground Service
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        String channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? createNotificationChannel(notificationManager) : "";
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, channelId);
+        Notification notification = notificationBuilder.setOngoing(true)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setPriority(PRIORITY_MIN)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .build();
+
+        startForeground(ID_SERVICE, notification);
 //        fn_getlocation();
+    }
+    @RequiresApi(Build.VERSION_CODES.O)
+    private String createNotificationChannel(NotificationManager notificationManager){
+        String channelId = "my_service_channelid";
+        String channelName = "My Foreground Service";
+        NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH);
+        // omitted the LED color
+        channel.setImportance(NotificationManager.IMPORTANCE_NONE);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        notificationManager.createNotificationChannel(channel);
+        return channelId;
     }
 
     @Override
@@ -140,7 +174,7 @@ public class GPSService extends Service implements LocationListener {
                     // for Activity#requestPermissions for more details.
                     return;
                 }
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 60000, 100f, this);
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 1f, this);
                 if (locationManager != null) {
                     location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (location != null) {

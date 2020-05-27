@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.renderscript.Double2;
@@ -31,6 +32,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.joo.corona.Adapter.GetCurrentLocationAdapter;
@@ -50,6 +55,9 @@ import com.naver.maps.map.UiSettings;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.PathOverlay;
 import com.naver.maps.map.util.FusedLocationSource;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -72,11 +80,14 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.joo.corona.Util.SharedPreferenceManager.MY_LAT;
 import static com.joo.corona.Util.SharedPreferenceManager.MY_LNG;
+import static com.joo.corona.Util.SharedPreferenceManager.setBoolean;
 
 public class MainActivity extends BaseActivity {
     String TAG = "MainActivity";
@@ -107,15 +118,19 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tv_date = (TextView) findViewById(R.id.main_date_tv);
+        tv_onoff = (TextView) findViewById(R.id.main_title_onoff);
+        switchButton = (SwitchButton) findViewById(R.id.main_title_switch);
+        tv_address = (TextView) findViewById(R.id.tv_address);
+        tv_latitude = (TextView) findViewById(R.id.tv_latitude);
+        tv_longitude = (TextView) findViewById(R.id.tv_longitude);
         Log.e(TAG,"onCreate");
+
         now = System.currentTimeMillis();
         String getTime = getTimeString(now);
         String[] temp = getTime.split("-");
         int tempYear = Integer.parseInt(temp[0]);
         int tempMonth = Integer.parseInt(temp[1]);
         int tempDay = Integer.parseInt(temp[2]);
-        Log.e(TAG,"tvdate");
-        tv_date.setText(tempMonth + "월 " + tempDay +"일");
 
         cnt = PrefM.getInt(this,"rebuild");
         //값이 할당 전이면 -1을 띄운다
@@ -124,39 +139,39 @@ public class MainActivity extends BaseActivity {
             PrefM.setInt(this,"rebuild",gpsCount);
         }
         path.setMap(null);
-        tv_onoff = (TextView) findViewById(R.id.main_title_onoff);
-        switchButton = (SwitchButton) findViewById(R.id.main_title_switch);
+
         myBtn = (Button) findViewById(R.id.main_my_btn);
         myBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                String getTime = getTimeString(now);
-                String[] temp = getTime.split("-");
-
-                int tempYear = Integer.parseInt(temp[0]);
-                int tempMonth = Integer.parseInt(temp[1]);
-                int tempDay = Integer.parseInt(temp[2]);
-                load(tempYear,tempMonth,tempDay);
+                if(timeChange(2000)){
+                    String getTime = getTimeString(now);
+                    String[] temp = getTime.split("-");
+                    int tempYear = Integer.parseInt(temp[0]);
+                    int tempMonth = Integer.parseInt(temp[1]);
+                    int tempDay = Integer.parseInt(temp[2]);
+                    load(tempYear,tempMonth,tempDay);
+                }
             }
         });
         otherBtn = (Button) findViewById(R.id.main_case_btn);
         otherBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long getNow = System.currentTimeMillis();
-                String getTime = getTimeString(getNow);
-                String[] temp = getTime.split("-");
-                int tempYear = Integer.parseInt(temp[0]);
-                int tempMonth = Integer.parseInt(temp[1]);
-                int tempDay = Integer.parseInt(temp[2]);
-                //loadJSON(tempYear,tempMonth,tempDay);
+
+                if(timeChange(2000)){
+                    String getTime = getTimeString(now);
+                    String[] temp = getTime.split("-");
+                    int tempYear = Integer.parseInt(temp[0]);
+                    int tempMonth = Integer.parseInt(temp[1]);
+                    int tempDay = Integer.parseInt(temp[2]);
+                    loadJSON(tempYear,tempMonth,tempDay);
+                    if(AppHelper.requestQueue == null) {
+                        AppHelper.requestQueue = Volley.newRequestQueue(getApplicationContext());
+                    }
+                }
             }
         });
-        if(AppHelper.requestQueue == null) {
-            AppHelper.requestQueue = Volley.newRequestQueue(getApplicationContext());
-        }
-
         imageViewLeft = (ImageView) findViewById(R.id.main_left_iv);
         imageViewLeft.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -192,18 +207,21 @@ public class MainActivity extends BaseActivity {
             }
         });
 
-        tv_address = (TextView) findViewById(R.id.tv_address);
-        tv_latitude = (TextView) findViewById(R.id.tv_latitude);
-        tv_longitude = (TextView) findViewById(R.id.tv_longitude);
+
+
         geocoder = new Geocoder(this, Locale.getDefault());
-
-
-//        //세로방향 리사이클러뷰
-//        LinearLayoutManager layoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false);
-//        recyclerView.setLayoutManager(layoutManager);
-//        GetCurrentLocationAdapter adapter = new GetCurrentLocationAdapter(getApplicationContext());
-//        recyclerView.setAdapter(adapter);
-
+        Boolean startBoolean = SharedPreferenceManager.getBoolean(getApplicationContext(),"rebuild");
+        if(startBoolean){
+            tv_onoff.setText("온라인");
+            switchButton.setEnabled(true);
+            switchButton.setChecked(true);
+            boolean_permission = true;
+        }else{
+            tv_onoff.setText("오프라인");
+            switchButton.setChecked(false);
+            boolean_permission = false;
+        }
+        tv_date.setText(tempMonth + "월 " + tempDay +"일");
         // 스위치 버튼입니다.
         switchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -211,23 +229,28 @@ public class MainActivity extends BaseActivity {
                 // 스위치 버튼이 체크되었는지 검사하여 텍스트뷰에 각 경우에 맞게 출력합니다.
                 if (isChecked){
                     if(boolean_permission) {
+                        SharedPreferenceManager.setBoolean(getApplicationContext(),"rebuild",true);
                         tv_onoff.setText("온라인");
-//                        if (mPref.getString("service", "").matches("")) {
-//                            medit.putString("service", "service").commit();
-                            Intent intent = new Intent(MainActivity.this, GPSService.class);
-                            intent.putExtra("runnung",0);
-                            Log.e(TAG,"startActivity");
+                        switchButton.setEnabled(isChecked);
+                        Intent intent = new Intent(MainActivity.this, GPSService.class);
+                        intent.putExtra("runnung",0);
+                        Log.e(TAG,"startActivity");
+                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                            Log.e(TAG,"forground 시작");
+                            startForegroundService(intent);
+                        }else{
+                            Log.e(TAG,"background 시작");
                             startService(intent);
-                        //}
+                        }
+
                     }
 
                 }else{
                     Intent intent = new Intent(MainActivity.this, GPSService.class);
                     intent.putExtra("runnung",1);
                     Log.e(TAG,"endActivity");
-
                     stopService(intent);
-
+                    SharedPreferenceManager.setBoolean(getApplicationContext(),"rebuild",false);
                     tv_onoff.setText("오프라인");
                 }
             }
@@ -327,11 +350,6 @@ public class MainActivity extends BaseActivity {
             String tempDay = temp[2];
             String tempHour = temp[3];
             String tempMinute = temp[4];
-//            int tempYear = Integer.parseInt(temp[0]);
-//            int tempMonth = Integer.parseInt(temp[1]);
-//            int tempDay = Integer.parseInt(temp[2]);
-//            int tempHour = Integer.parseInt(temp[3]);
-//            int tempMinute = Integer.parseInt(temp[4]);
 
             String fileToWrirte = tempYear+"/"+tempMonth+"/"+tempDay+"/"+tempHour+"/"+tempMinute +"/"+latitude+"/"+longitude+"/\n";
 
@@ -360,20 +378,51 @@ public class MainActivity extends BaseActivity {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
     }
-//    public void sendRequest(){
-//        String url = "http://18.190.25.173:3000/join_corona";
-//        StringRequest request = new StringRequest(
-//                Request.Method.GET,
-//                url,
-//
-//        )
-//    }
-//    public void loadJSON(int tempYear,int tempMonth, int tempDay){
-//        sendRequest();
-//        Marker marker = new Marker();
-//        marker.setPosition();
-//
-//    }
+    public void sendRequest(int year, int month, int day){
+        String url = "http://3.23.20.150:3000/getposts_date";
+        RequestQueue postReQuestQueue = Volley.newRequestQueue(this);
+
+        try{
+
+            StringRequest request = new StringRequest(
+                    Request.Method.POST,
+                    url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                              Log.e(TAG,"응답: "+ response);
+                        }
+                    },
+                    new Response.ErrorListener(){
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Log.e(TAG,"에러: "+ error.getMessage());
+                        }
+                    }) {
+                        @Override
+                        protected Map<String, String> getParams(){
+                            Map<String, String> myData = new HashMap<>();
+                            myData.put("year", String.valueOf(year));
+                            myData.put("month", String.valueOf(month));
+                            myData.put("day", String.valueOf(day));
+                            return myData;
+                        }
+                    };
+            //request.setShouldCache(false);
+            //AppHelper.requestQueue.add(request);
+            postReQuestQueue.add(request);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+    }
+    public void loadJSON(int tempYear,int tempMonth, int tempDay){
+        sendRequest(tempYear,tempMonth,tempDay);
+        Marker marker = new Marker();
+        //marker.setPosition();
+
+    }
     public void load (int tempYear,int tempMonth, int tempDay){
         try{
             BufferedReader br = new BufferedReader(new FileReader(getFilesDir()+filename));
@@ -385,6 +434,7 @@ public class MainActivity extends BaseActivity {
             Log.e(TAG,"Load text");
             List<LatLng> coords = new ArrayList<>();
            //List<LatLng> tempCoords = new ArrayList<>();
+            int flag=0;
             while((text= br.readLine())!=null){
                 String[] temp = text.split("/");
                 Log.e(TAG,"tempAssigned");
@@ -394,6 +444,7 @@ public class MainActivity extends BaseActivity {
                 int day = Integer.parseInt(temp[2]);
                 int hour,minute;
                 if(tempYear == year && tempMonth == month && tempDay == day){
+                    flag=1;
                     hour = Integer.parseInt(temp[3]);
                     minute =Integer.parseInt(temp[4]);
                     lat = Double.parseDouble(temp[5]);
@@ -401,19 +452,16 @@ public class MainActivity extends BaseActivity {
                     Log.e(TAG, "lat: "+ lat + " lng: " + lng +"  " + month+"/"+day+"/"+hour+"/"+minute);
                     Collections.addAll(coords,new LatLng(lat,lng));
                 }
-                else{
-                    continue;
-                }
-
             }
-            if(coords.size()<2){
+            if(coords.size()<2 || flag==0){
              path.setMap(null);
             }
-            else {
+            else if(coords.size()>=2 && flag==1) {
                 path.setCoords(coords);
                 path.setMap(mNaverMap);
                 path.setWidth(20);
                 path.setOutlineWidth(7);
+                coords.clear();
             }
             //path.setOutlineColor(333333);
             br.close();
@@ -466,10 +514,7 @@ public class MainActivity extends BaseActivity {
                 // 지도 스크롤해서 보고있는 위치가 바뀐경우 호출
                 // 지도 스크롤마다 reverseGeocoording 을 호출하는데
                 // 호출 횟수를 줄이기위해, 0.3초마다 읽기 + 이전에 갱신한 위치와 10미터 이상 벗어난경우 읽기 기능추가
-
-                Long changeTime = System.currentTimeMillis();
-                if (changeTime - b4Time > 2000) { // 이전 변경에서 1초 이상이면
-                    b4Time = System.currentTimeMillis();
+                if(timeChange(2000)){
                     try {
                         if (cameraLatLng.distanceTo(mNaverMap.getCameraPosition().target) > 10.0) { // 이전 변경에서 10미터 이상 이동하면
                             cameraLatLng = mNaverMap.getCameraPosition().target;
@@ -488,5 +533,13 @@ public class MainActivity extends BaseActivity {
         Date mDate = new Date(t);
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
         return simpleDateFormat.format(mDate);
+    }
+    private boolean timeChange(long duration){
+        Long changeTime = System.currentTimeMillis();
+        if(changeTime - b4Time >duration){
+            b4Time = System.currentTimeMillis();
+            return true;
+        }
+        return false;
     }
 }

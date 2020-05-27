@@ -4,30 +4,30 @@
     android:background="#ffffff"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:orientation="horizontal"
-
-        android:gravity="center"
         android:background="@color/colorPrimary">
         <TextView
+            android:gravity="center"
             android:id="@+id/main_title_onoff"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
-            android:layout_gravity="center"
             android:text="오프라인"
             android:textColor="#ffffff"
             android:textSize="20dp"
-            android:gravity="center"/>
+            android:layout_gravity="center"/>
         <com.kyleduo.switchbutton.SwitchButton
+            android:gravity="center"
+            android:layout_gravity="right|center_vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/main_title_switch"
-            android:theme="@style/SwitchButtonStyle"
+            style="@style/SwitchButtonStyle"
+            android:layout_marginRight="16dp"
             >
         </com.kyleduo.switchbutton.SwitchButton>
-    </LinearLayout>
+    </FrameLayout>
 
     <fragment
         android:id="@+id/main_mapview"
