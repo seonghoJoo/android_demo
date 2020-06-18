@@ -53,14 +53,16 @@ public class GPSService extends Service implements LocationListener {
     boolean isNetworkEnable = false;
     double latitude, longitude;
     LocationManager locationManager;
+    LocationManager b4LocationManager;
     Location location;
     private Handler mHandler = new Handler();
     private Timer mTimer = null;
-    long notify_interval = 10000;
+    long notify_interval = 60*1000;
     public static String str_receiver = "servicetutorial.service.receiver";
     Intent intent;
     int val=0;
     // Constants
+    double originLat, originLong;
     private static final int ID_SERVICE = 101;
 
     public GPSService() {
@@ -77,11 +79,12 @@ public class GPSService extends Service implements LocationListener {
     public void onCreate() {
         super.onCreate();
 
-        Log.e(TAG,"onCreate: " + val+"\n\n\n");
+
         mTimer = new Timer();
         mTimer.schedule(new TimerTaskToGetLocation(),5,notify_interval);
-        intent = new Intent(str_receiver);
 
+        intent = new Intent(str_receiver);
+        fn_getlocation(val);
 
         // Create the Foreground Service
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -94,7 +97,7 @@ public class GPSService extends Service implements LocationListener {
                 .build();
 
         startForeground(ID_SERVICE, notification);
-//        fn_getlocation();
+
     }
     @RequiresApi(Build.VERSION_CODES.O)
     private String createNotificationChannel(NotificationManager notificationManager){
@@ -123,7 +126,7 @@ public class GPSService extends Service implements LocationListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         val = intent.getIntExtra("running",0);
-        Log.e(TAG,"onStartCommand val: "+ val);
+
         fn_getlocation(val);
         return super.onStartCommand(intent, flags, startId);
     }
@@ -150,50 +153,52 @@ public class GPSService extends Service implements LocationListener {
     }
 
     private void fn_getlocation(int v) {
-        if (v == 0) {
-            locationManager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
+        if(v==0) {
+            if (locationManager == null) {
+                locationManager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
+            }
             isGPSEnable = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
             isNetworkEnable = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnable || !isNetworkEnable) {
-                if(!isNetworkEnable && isGPSEnable)
-                    Log.e(TAG,"네트워크문제");
-                if(isNetworkEnable && !isGPSEnable)
-                    Log.e(TAG,"gps문제");
-                if(!isNetworkEnable && !isGPSEnable)
-                    Log.e(TAG,"둘다 문제");
+                if (!isNetworkEnable && isGPSEnable)
+                    Log.e(TAG, "네트워크문제");
+                if (isNetworkEnable && !isGPSEnable)
+                    Log.e(TAG, "gps문제");
+                if (!isNetworkEnable && !isGPSEnable)
+                    Log.e(TAG, "둘다 문제");
+                mTimer.cancel();
+                mTimer = null;
             } else {
                 location = null;
                 if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    Activity#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for Activity#requestPermissions for more details.
                     return;
                 }
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 1f, this);
+
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 600000, 3, this);
+
                 if (locationManager != null) {
+                    //b4LocationManager = locationManager;
                     location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    if (location != null) {
-                            Log.e("latitude", location.getLatitude() + "");
-                            Log.e("longitude", location.getLongitude() + "");
-                        latitude = location.getLatitude();
-                        longitude = location.getLongitude();
+
+                    if (distance(originLat, originLong, location.getLatitude(), location.getLongitude()) > 3.0 && location != null) {
+                        originLat = location.getLatitude();
+                        originLong = location.getLongitude();
+                        Toast.makeText(getApplicationContext(), location.getTime() + "", Toast.LENGTH_LONG).show();
                         fn_update(location);
                     }
                 }
 
             }
-
+        }else{
+            mTimer.cancel();
+            mTimer = null;
         }
+
     }
 
     private void fn_update(Location location){
-//        Log.e(TAG,location.getLatitude()+"gggg" +
-//            "\n");
+
         intent.putExtra("latutide",location.getLatitude()+"");
         intent.putExtra("longitude",location.getLongitude()+"");
         intent.putExtra("AtTime",location.getTime()+"");
@@ -203,17 +208,31 @@ public class GPSService extends Service implements LocationListener {
     private class TimerTaskToGetLocation extends TimerTask{
         @Override
         public void run() {
-
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if(val==0){
-                        fn_getlocation(val);;
-                    }
+                    if(val==0)
+                    fn_getlocation(val);;
+
                 }
             });
 
         }
+    }
+    private double distance(double lat1, double lng1, double lat2, double lng2 ){
+        double theta = lng1 - lng2;
+        double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+        dist = Math.acos(dist);
+        dist = rad2deg(dist);
+        dist = dist * 60 * 1.1515 * 1609.344;
+        return dist;
+    }
+    private double deg2rad(double deg){
+        return deg*Math.PI / 180;
+    }
+
+    private double rad2deg(double rad){
+        return rad* 180 / Math.PI;
     }
 
 }
