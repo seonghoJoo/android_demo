@@ -180,7 +180,7 @@ public class GPSService extends Service implements LocationListener {
                 if (locationManager != null) {
                     //b4LocationManager = locationManager;
                     location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
+                    //3 meter 좌표 사이 거리 설정
                     if (distance(originLat, originLong, location.getLatitude(), location.getLongitude()) > 3.0 && location != null) {
                         originLat = location.getLatitude();
                         originLong = location.getLongitude();

@@ -37,8 +37,10 @@ import com.joo.corona.Data.CaseRow;
 import com.joo.corona.Data.Ccase;
 import com.joo.corona.Data.PrefM;
 import com.joo.corona.Util.AppHelper;
+import com.joo.corona.Util.LatLngUtils;
 import com.joo.corona.Util.SharedPreferenceManager;
 import com.naver.maps.geometry.LatLng;
+import com.naver.maps.map.CameraPosition;
 import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapFragment;
@@ -74,6 +76,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Vector;
 
 public class MainActivity extends BaseActivity {
     String TAG = "MainActivity";
@@ -101,9 +104,12 @@ public class MainActivity extends BaseActivity {
     UiSettings naverMapUiSetting;
     ArrayList<Marker> casemarkerArrayList = new ArrayList<>();
     ArrayList<Marker> mymarkerArrayList = new ArrayList<>();
+    private Vector<Marker> activeMarkers;
+
     LinearLayout panelRoot;
-    Marker casemarker = new Marker();
-    Marker myMarker = new Marker();
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -142,7 +148,7 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 if(timeChange(2000)){
-                    myMarker.setMap(null);
+
                     String getTime = getTimeString(now);
                     String[] temp = getTime.split("-");
                     int tempYear = Integer.parseInt(temp[0]);
@@ -158,7 +164,7 @@ public class MainActivity extends BaseActivity {
             public void onClick(View v) {
 
                 if(timeChange(2000)){
-                    casemarker.setMap(null);
+                    //casemarker.setMap(null);
                     String getTime = getTimeString(now);
                     String[] temp = getTime.split("-");
                     int tempYear = Integer.parseInt(temp[0]);
@@ -203,7 +209,7 @@ public class MainActivity extends BaseActivity {
                 int tempMonth = Integer.parseInt(temp[1]);
                 int tempDay = Integer.parseInt(temp[2]);
                 tv_date.setText(tempMonth + "월 " + tempDay +"일");
-                Log.e(TAG,"RigjtLoad");
+                Log.e(TAG,"RightLoad");
                 //load(tempYear,tempMonth,tempDay);
             }
         });
@@ -371,7 +377,7 @@ public class MainActivity extends BaseActivity {
     }
     public void sendRequest(int year, int month, int day){
         // 서버에서 Json 요청하기
-        String url = "http://18.220.198.94:3000/getposts_date";
+        String url = "http://18.221.109.215:3000/getposts_date";
         RequestQueue postReQuestQueue = Volley.newRequestQueue(this);
 
         try{
@@ -422,6 +428,7 @@ public class MainActivity extends BaseActivity {
         casemarkerArrayList.clear();
         int i=0;
         while (i < caseList.size()) {
+            Marker casemarker = new Marker();
             Log.e(TAG, caseList.get(i).getLongtitude());
             casemarker.setPosition(new LatLng(Double.parseDouble(caseList.get(i).getLatitude()), Double.parseDouble(caseList.get(i).getLongtitude())));
             casemarker.setIcon(OverlayImage.fromResource(R.drawable._case_marker));
@@ -476,29 +483,27 @@ public class MainActivity extends BaseActivity {
             mymarkerArrayList.clear();
 
             Log.e(TAG,"Load text");
-            List<LatLng> coords = new ArrayList<>();
+
            //List<LatLng> tempCoords = new ArrayList<>();
             int flag=0;
             int hour,minute;
-
-
-            int i=0;
+            int cnt=0;
+            List<LatLng> coords = new ArrayList<>();
             while((text= br.readLine())!=null){
                 String[] temp = text.split("/");
-                Log.e(TAG,"tempAssigned");
+                //Log.e(TAG,"tempAssigned");
                 //Log.e(TAG,temp[0]+"    " + temp[1]+  "    " + temp[2]);
                 int year = Integer.parseInt(temp[0]);
                 int month = Integer.parseInt(temp[1]);
                 int day = Integer.parseInt(temp[2]);
                 if(tempYear == year && tempMonth == month && tempDay == day){
                     flag=1;
-
                     hour = Integer.parseInt(temp[3]);
                     minute =Integer.parseInt(temp[4]);
                     lat = Double.parseDouble(temp[5]);
                     lng = Double.parseDouble(temp[6]);
                     try{
-
+                        Marker myMarker = new Marker();
                         myMarker.setPosition(new LatLng(lat, lng));
                         //marker.setIcon(MarkerIcons.BLACK);
                         myMarker.setIcon(OverlayImage.fromResource(R.drawable._case_marker));
@@ -546,8 +551,8 @@ public class MainActivity extends BaseActivity {
                         }
 
                         // 마커에 태그부여
-                        myMarker.setTag(i);
-                        i++;
+                        myMarker.setTag(cnt);
+                        cnt++;
                         // 맵에 마커 위치시킴
                         myMarker.setMap(mNaverMap);
                         // 마커에 클릭함수 셋
@@ -555,6 +560,7 @@ public class MainActivity extends BaseActivity {
                         // 마커에 클릭함수 셋
                         //marker.setOnClickListener(markerOnClickListener);
                         mymarkerArrayList.add(myMarker);
+                        //activeMarkers.add(myMarker);
                         Log.e(TAG, "lat: "+ lat + " lng: " + lng +"  " + month+"/"+day+"/"+hour+"/"+minute);
                         Collections.addAll(coords,new LatLng(lat,lng));
                     }
@@ -564,11 +570,17 @@ public class MainActivity extends BaseActivity {
                 }
             }
             if(coords.size()<2 || flag==0){
+
             }
             else if(coords.size()>=2 && flag==1) {
                 coords.clear();
+                Toast.makeText(getApplicationContext(),"현재 "+ cnt +"개의 동선이 있습니다.",Toast.LENGTH_LONG).show();
+//                int i=0;
+//                while(i<mymarkerArrayList.size()){
+//                    mymarkerArrayList.get(i).setMap(mNaverMap);
+//                    i++;
+//                }
             }
-            //path.setOutlineColor(333333);
             br.close();
 
         } catch (FileNotFoundException e) {
@@ -605,7 +617,6 @@ public class MainActivity extends BaseActivity {
     private void setMyLocation() {
         // 내 좌표로 카메라 이동
         // 초기에 내 좌표로 이동
-
         first = false;
         CameraUpdate cameraUpdate = CameraUpdate.scrollTo(myLatLng);
         mNaverMap.moveCamera(cameraUpdate);
@@ -615,7 +626,16 @@ public class MainActivity extends BaseActivity {
         mNaverMap.addOnCameraChangeListener(new NaverMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(int reason, boolean animated) {
-
+//                freeActiveMarkers();
+//                LatLng currentPosition = LatLngUtils.getcurrentPosition(mNaverMap);
+//                for (LatLng markerPostion: coords){
+//                    if(!LatLngUtils.withSignMarker(currentPosition,markerPostion))
+//                        continue;
+//                    Marker marker = new Marker();
+//                    marker.setPosition(markerPostion);
+//                    marker.setMap(mNaverMap);
+//                    activeMarkers.add(marker);
+//                }
                 // 지도 스크롤해서 보고있는 위치가 바뀐경우 호출
                 // 지도 스크롤마다 reverseGeocoording 을 호출하는데
                 // 호출 횟수를 줄이기위해, 0.3초마다 읽기 + 이전에 갱신한 위치와 10미터 이상 벗어난경우 읽기 기능추가
@@ -634,6 +654,7 @@ public class MainActivity extends BaseActivity {
             }
         }});
     }
+
     private String getTimeString(long t){
         Date mDate = new Date(t);
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -647,7 +668,16 @@ public class MainActivity extends BaseActivity {
         }
         return false;
     }
-
+    private void freeActiveMarkers(){
+        if(activeMarkers == null){
+            activeMarkers = new Vector<Marker>();
+            return;
+        }
+        for (Marker activeMarker:  activeMarkers){
+            activeMarker.setMap(null);
+        }
+        activeMarkers = new Vector<Marker>();
+    }
 
 
 }
