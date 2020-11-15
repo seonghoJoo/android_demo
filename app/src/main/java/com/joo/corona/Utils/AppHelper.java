@@ -1,4 +1,4 @@
-package com.joo.corona.Util;
+package com.joo.corona.Utils;
 
 import com.android.volley.RequestQueue;
 

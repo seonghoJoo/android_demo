@@ -21,13 +21,13 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 public class LoadingActivtiy extends BaseActivity {
-    PermissionListener permissionlistener;
+    PermissionListener permissionListener;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_loading_activtiy);
         Log.e("loading", "intent실행");
-        permissionlistener = new PermissionListener() {
+        permissionListener = new PermissionListener() {
             @Override
             public void onPermissionGranted() {
                 Toast.makeText(LoadingActivtiy.this, "Permission Granted", Toast.LENGTH_SHORT).show();
@@ -46,7 +46,7 @@ public class LoadingActivtiy extends BaseActivity {
         };
         // 오픈소스 테드퍼미션을 이용해 필수권한 체크
         TedPermission.with(this)
-                .setPermissionListener(permissionlistener)
+                .setPermissionListener(permissionListener)
                 .setRationaleTitle("앱 접근 권한 안내")
                 .setRationaleMessage("권한 관련 메세지 안내 동의는 필수로 하셔야 이용하실 수 있습니다.")
                 .setDeniedMessage(
