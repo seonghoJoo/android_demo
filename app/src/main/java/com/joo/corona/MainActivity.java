@@ -73,7 +73,7 @@ public class MainActivity extends BaseActivity {
     public static long b4Time = 0L;
 
     boolean boolean_permission, first = true;
-    int month,day,hour,minute, gpsCount,cnt;
+    int gpsCount,cnt;
     long now;
 
     Double latitude,longitude;
@@ -120,7 +120,7 @@ public class MainActivity extends BaseActivity {
         now = System.currentTimeMillis();
         //String getTime = getTimeString(now);
         String[] temp = TimeUtil.getCurrentTimeStringArray(now);
-
+        Log.e("Main",temp[1]+ "월 " + temp[2] +"일");
         tv_date.setText(temp[1] + "월 " + temp[2] +"일");
 
         cnt = PrefM.getInt(this,"rebuild");
@@ -176,16 +176,9 @@ public class MainActivity extends BaseActivity {
 
         geocoder = new Geocoder(this, Locale.getDefault());
         Boolean startBoolean = SharedPreferenceManager.getBoolean(getApplicationContext(),"rebuild");
-        if(startBoolean){
-            tv_onoff.setText("온라인");
-            switchButton.setChecked(true);
-            boolean_permission = true;
-        }else{
-            tv_onoff.setText("오프라인");
-            switchButton.setChecked(false);
-            boolean_permission = false;
-        }
-
+        tv_onoff.setText((startBoolean==true? "온" : "오프")+"라인");
+        switchButton.setChecked(startBoolean);
+        boolean_permission = startBoolean;
         // 스위치 버튼입니다.
         switchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -199,15 +192,13 @@ public class MainActivity extends BaseActivity {
                         intent.putExtra("runnung",0);
                         Log.e(TAG,"startActivity");
                         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                            Log.e(TAG,"forground 시작");
+                            Log.e(TAG,"foreground 시작");
                             startForegroundService(intent);
                         }else{
                             Log.e(TAG,"background 시작");
                             startService(intent);
                         }
-
                     }
-
                 }else{
                     Intent intent = new Intent(MainActivity.this, GPSService.class);
                     intent.putExtra("runnung",1);
@@ -256,7 +247,6 @@ public class MainActivity extends BaseActivity {
         if ((ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
 
             if ((ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION))) {
-
 
             } else {
                 ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -331,7 +321,8 @@ public class MainActivity extends BaseActivity {
     }
     public void sendRequest(int year, int month, int day){
         // 서버에서 Json 요청하기
-        String url = "http://3.16.168.84:3000/getposts_date";
+        String url = "http://18.217.248.147:3000/getposts_date";
+        Log.e("Main","서버 요");
         RequestQueue postReQuestQueue = Volley.newRequestQueue(this);
         try{
             StringRequest request = new StringRequest(
@@ -359,8 +350,6 @@ public class MainActivity extends BaseActivity {
                             return myData;
                         }
                     };
-            //request.setShouldCache(false);
-            //AppHelper.requestQueue.add(request);
             postReQuestQueue.add(request);
         }catch (Exception e){
             e.printStackTrace();
@@ -371,9 +360,7 @@ public class MainActivity extends BaseActivity {
     public void processResponse(String response){
         Gson gson = new Gson();
         Log.e(TAG,"processResponse() 실행");
-        if(caseList!=null) {
-            caseList = null;
-        }
+
         Ccase[] array = gson.fromJson(response,Ccase[].class);
         caseList = Arrays.asList(array);
 
@@ -394,33 +381,32 @@ public class MainActivity extends BaseActivity {
     public void loadJSON(int tempYear,int tempMonth, int tempDay){
 
         sendRequest(tempYear,tempMonth,tempDay);
+        int i = 0;
+//        while(i<caseList.size()) {
+//            casemarkerArrayList.get(i).setMap(null);
+//            i++;
+//        }
+//        i=0;
         casemarkerArrayList.clear();
         casemarker.setMap(null);
-        int i=0;
+
         while (i < caseList.size()) {
             Log.e(TAG,"i: " + i);
             casemarker = new Marker();
             Log.e(TAG, caseList.get(i).getLongtitude());
             casemarker.setPosition(new LatLng(Double.parseDouble(caseList.get(i).getLatitude()), Double.parseDouble(caseList.get(i).getLongtitude())));
             casemarker.setIcon(OverlayImage.fromResource(R.drawable._case_marker));
-            //마스크 착용
-            if (caseList.get(i).getMask() == 1) {
 
-                casemarker.setCaptionText(caseList.get(i).getPlace_name());
-                casemarker.setSubCaptionText(caseList.get(i).getC_address() + " 확진자\n" +
-                        caseList.get(i).getVisit_start_time() + "~" + caseList.get(i).getVisit_end_time() + "\n" + "마스크 착용");
-                casemarker.setSubCaptionColor(Color.BLUE);
-                casemarker.setSubCaptionHaloColor(Color.rgb(200, 255, 200));
-                casemarker.setSubCaptionTextSize(10);
+            casemarker.setCaptionText(caseList.get(i).getPlace_name());
+            casemarker.setSubCaptionText(caseList.get(i).getC_address() + " 확진자");
+            casemarker.setSubCaptionColor(Color.BLUE);
+            casemarker.setSubCaptionHaloColor(Color.rgb(200, 255, 200));
+            casemarker.setSubCaptionTextSize(10);
+
+            if(caseList.get(i).getMask()==1) {
                 casemarker.setIconTintColor(0x00CC00);
-            } else if (caseList.get(i).getMask() == 0) {
-                casemarker.setCaptionText(caseList.get(i).getPlace_name());
-                casemarker.setSubCaptionText(caseList.get(i).getC_address() + " 확진자\n" +
-                        caseList.get(i).getVisit_start_time() + "~" + caseList.get(i).getVisit_end_time() + "\n" + "마스크 미착용");
-                casemarker.setSubCaptionColor(Color.BLUE);
-                casemarker.setSubCaptionHaloColor(Color.rgb(200, 255, 200));
-                casemarker.setSubCaptionTextSize(10);
-                casemarker.setIconTintColor(0xFF0000);
+            }else{
+                casemarker.setIconTintColor(Color.RED);
             }
             casemarker.setCaptionRequestedWidth(200);
             // 마커에 태그부여
@@ -462,8 +448,6 @@ public class MainActivity extends BaseActivity {
 
             while((text= br.readLine())!=null){
                 String[] temp = text.split("/");
-                //Log.e(TAG,"tempAssigned");
-                //Log.e(TAG,temp[0]+"    " + temp[1]+  "    " + temp[2]);
                 int year = Integer.parseInt(temp[0]);
                 int month = Integer.parseInt(temp[1]);
                 int day = Integer.parseInt(temp[2]);
@@ -597,8 +581,6 @@ public class MainActivity extends BaseActivity {
         mNaverMap.addOnCameraChangeListener(new NaverMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(int reason, boolean animated) {
-
-
                 // 지도 스크롤해서 보고있는 위치가 바뀐경우 호출
                 // 지도 스크롤마다 reverseGeocoording 을 호출하는데
                 // 호출 횟수를 줄이기위해, 0.3초마다 읽기 + 이전에 갱신한 위치와 10미터 이상 벗어난경우 읽기 기능추가
@@ -654,6 +636,4 @@ public class MainActivity extends BaseActivity {
 //        mymarkerArrayList = new ArrayList<Marker>();
         mymarkerArrayList.get(order).setMap(null);
     }
-
-
 }

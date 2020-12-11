@@ -133,9 +133,10 @@
         <TextView
             android:id="@+id/main_date_tv"
             android:gravity="center"
-            android:textSize="30sp"
+            android:textSize="20sp"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:textColor="#424242"
             tools:text="5월 17일"></TextView>
         <View
             android:layout_width="0dp"
